@@ -2,10 +2,10 @@ import yfinance as yf
 import pandas as pd
 from datetime import datetime, timedelta
 from typing import Optional, Dict
+from config import settings
 
 
 class DataFeed:
-    YF_SUFFIX = "=X"
 
     def __init__(self):
         self._cache = {}
@@ -19,14 +19,23 @@ class DataFeed:
             if now - self._cache_time[cache_key] < self.cache_ttl:
                 return self._cache[cache_key]
 
-        ticker = f"{pair[:3]}{pair[3:]}{self.YF_SUFFIX}"
+        # Usa il ticker corretto per ogni coppia
+        ticker = settings.get_ticker(pair)
+
         try:
-            data = yf.download(ticker, period=period, interval=interval, progress=False, auto_adjust=True)
+            data = yf.download(
+                ticker, period=period, interval=interval,
+                progress=False, auto_adjust=True,
+            )
             if data.empty:
                 return None
             if isinstance(data.columns, pd.MultiIndex):
                 data.columns = data.columns.get_level_values(0)
-            data = data.rename(columns={"open": "Open", "high": "High", "low": "Low", "close": "Close", "volume": "Volume"})
+            data = data.rename(columns={
+                "open": "Open", "high": "High",
+                "low": "Low", "close": "Close",
+                "volume": "Volume",
+            })
             self._cache[cache_key] = data
             self._cache_time[cache_key] = now
             return data
@@ -42,7 +51,11 @@ class DataFeed:
             if interval == "4h":
                 df_1h = self.get_candles(pair, "1h", "120d")
                 if df_1h is not None and not df_1h.empty:
-                    df = df_1h.resample("4h").agg({"Open": "first", "High": "max", "Low": "min", "Close": "last", "Volume": "sum"}).dropna()
+                    df = df_1h.resample("4h").agg({
+                        "Open": "first", "High": "max",
+                        "Low": "min", "Close": "last",
+                        "Volume": "sum",
+                    }).dropna()
                     results[label] = df
             else:
                 df = self.get_candles(pair, interval, period)
