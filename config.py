@@ -2,7 +2,7 @@
 
 # ===== TELEGRAM =====
 TELEGRAM_BOT_TOKEN = "8698435646:AAEIiLnN2kTk5B9OJnN7B3JQBySZjqM8WDg"     # Ottenuto da @BotFather
-TELEGRAM_CHAT_ID   = "YOUR_TELEGRAM_CHAT_ID"        # Ottenuto da @userinfobot
+TELEGRAM_CHAT_ID   = "697188782"        # Ottenuto da @userinfobot
 
 # ===== ANTHROPIC (Claude AI) =====
 ANTHROPIC_API_KEY = "YOUR_ANTHROPIC_API_KEY"      # Ottenuto da https://console.anthropic.com/
