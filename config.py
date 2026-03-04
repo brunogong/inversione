@@ -1,7 +1,7 @@
 # config.py
 
 # ===== TELEGRAM =====
-TELEGRAM_BOT_TOKEN = "YOUR_TELEGRAM_BOT_TOKEN"     # Ottenuto da @BotFather
+TELEGRAM_BOT_TOKEN = "8698435646:AAEIiLnN2kTk5B9OJnN7B3JQBySZjqM8WDg"     # Ottenuto da @BotFather
 TELEGRAM_CHAT_ID   = "YOUR_TELEGRAM_CHAT_ID"        # Ottenuto da @userinfobot
 
 # ===== ANTHROPIC (Claude AI) =====
