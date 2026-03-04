@@ -22,34 +22,49 @@ class RiskManager:
 
     def calculate_position(self, pair, entry, stop_loss, direction):
         sl_dist = abs(entry - stop_loss)
-        pip_sz = 0.01 if "JPY" in pair else 0.0001
+
+        # Usa la config centralizzata per pip size e pip value
+        pip_sz = settings.get_pip_size(pair)
         sl_pips = sl_dist / pip_sz
+
         if sl_pips == 0:
             return PositionSize(0, 0, 0, 0, 0)
 
-        pip_val = self._pip_value(pair, entry)
+        pip_val = settings.get_pip_value(pair, entry)
+
+        # Calcola il rischio
         risk_amt = self.balance * (self.risk_pct / 100)
         remaining = self.balance * (self.max_daily_risk / 100) - self.daily_risk_used
         risk_amt = min(risk_amt, max(remaining, 0))
+
         if risk_amt <= 0:
             return PositionSize(0, 0, 0, 0, 0)
 
+        # Calcola lot size
         lot_size = risk_amt / (sl_pips * pip_val)
-        lot_size = max(0.01, round(lot_size, 2))
+
+        # Lotti minimi diversi per metalli
+        if pair in ["XAUUSD", "XAGUSD"]:
+            lot_size = max(0.01, round(lot_size, 2))
+        else:
+            lot_size = max(0.01, round(lot_size, 2))
+
         actual_risk = lot_size * sl_pips * pip_val
         actual_pct = (actual_risk / self.balance) * 100
-        margin = (lot_size * self.STANDARD_LOT * entry) / 100
 
-        return PositionSize(lot_size, round(actual_risk, 2), round(actual_pct, 2), round(margin, 2), round(pip_val, 4))
-
-    def _pip_value(self, pair, price):
-        quote = pair[3:]
-        if quote == "USD":
-            return 10.0
-        elif "JPY" in pair:
-            return (10.0 / price) * 100 if price > 0 else 10.0
+        # Margine (approssimato)
+        if pair == "XAUUSD":
+            margin = (lot_size * 100 * entry) / 100  # 100 oz per lotto
+        elif pair == "XAGUSD":
+            margin = (lot_size * 5000 * entry) / 100  # 5000 oz per lotto
         else:
-            return 10.0 / price if price > 0 else 10.0
+            margin = (lot_size * self.STANDARD_LOT * entry) / 100
+
+        return PositionSize(
+            lot_size, round(actual_risk, 2),
+            round(actual_pct, 2), round(margin, 2),
+            round(pip_val, 4),
+        )
 
     def register_trade(self, risk_amount):
         self.daily_risk_used += risk_amount
