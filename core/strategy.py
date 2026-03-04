@@ -59,11 +59,13 @@ class StrategyEngine:
 
         close = _g("Close")
 
+        # 1. EMA TREND
         e50, e200 = _g("EMA_50"), _g("EMA_200")
         if e50 is not np.nan and e200 is not np.nan:
             scores["ema_trend"] = 1 if e50 > e200 else -1
             details["ema_trend"] = f"EMA 50 {'>' if e50 > e200 else '<'} 200"
 
+        # 2. EMA CROSS
         e8, e21, pe8, pe21 = _g("EMA_8"), _g("EMA_21"), _gp("EMA_8"), _gp("EMA_21")
         if not any(v is np.nan for v in [e8, e21, pe8, pe21]):
             if pe8 <= pe21 and e8 > e21:
@@ -75,6 +77,7 @@ class StrategyEngine:
             else:
                 scores["ema_cross"] = 0
 
+        # 3. RSI REVERSAL
         rsi = _g("RSI", 50)
         rsi_p = _gp("RSI", 50)
         if rsi < 30:
@@ -92,6 +95,7 @@ class StrategyEngine:
         else:
             scores["rsi_reversal"] = 0
 
+        # 4. RSI DIVERGENCE
         rd = _g("RSI_Divergence", 0)
         if rd != 0:
             scores["rsi_divergence"] = int(rd)
@@ -99,6 +103,7 @@ class StrategyEngine:
         else:
             scores["rsi_divergence"] = 0
 
+        # 5. MACD CROSS
         m, ms, pm, pms = _g("MACD", 0), _g("MACD_signal", 0), _gp("MACD", 0), _gp("MACD_signal", 0)
         if not any(v is np.nan for v in [m, ms, pm, pms]):
             if pm <= pms and m > ms:
@@ -110,6 +115,7 @@ class StrategyEngine:
             else:
                 scores["macd_cross"] = 0
 
+        # 6. MACD HISTOGRAM
         mh, mhp = _g("MACD_hist", 0), _g("MACD_hist_prev", 0)
         if mhp < 0 < mh:
             scores["macd_histogram"] = 1
@@ -120,6 +126,7 @@ class StrategyEngine:
         else:
             scores["macd_histogram"] = 0
 
+        # 7. BOLLINGER
         bbp = _g("BB_pct", 0.5)
         if bbp < 0.05:
             scores["bollinger"] = 1
@@ -130,6 +137,7 @@ class StrategyEngine:
         else:
             scores["bollinger"] = 0
 
+        # 8. STOCHASTIC
         sk, sd, psk, psd = _g("STOCH_K", 50), _g("STOCH_D", 50), _gp("STOCH_K", 50), _gp("STOCH_D", 50)
         if sk < 20 and psk <= psd and sk > sd:
             scores["stochastic"] = 1
@@ -140,6 +148,7 @@ class StrategyEngine:
         else:
             scores["stochastic"] = 0
 
+        # 9. ADX
         adx = _g("ADX", 0)
         dip, dim = _g("DI_plus", 0), _g("DI_minus", 0)
         if adx > 20:
@@ -148,6 +157,7 @@ class StrategyEngine:
         else:
             scores["adx_strength"] = 0
 
+        # 10. ICHIMOKU
         ia, ib, tk, kj = _g("ICHI_A"), _g("ICHI_B"), _g("ICHI_tenkan"), _g("ICHI_kijun")
         if not any(v is np.nan for v in [ia, ib, tk, kj]):
             ct, cb = max(ia, ib), min(ia, ib)
@@ -160,6 +170,7 @@ class StrategyEngine:
             else:
                 scores["ichimoku"] = 0
 
+        # 11. MARKET STRUCTURE
         sb = _g("Structure_Break", 0)
         st_val = _g("Structure", 0)
         if sb != 0:
@@ -171,6 +182,7 @@ class StrategyEngine:
         else:
             scores["market_structure"] = 0
 
+        # 12. CANDLE PATTERN
         cp = _g("Candle_Pattern", 0)
         if cp != 0:
             scores["candle_pattern"] = int(cp)
@@ -178,6 +190,7 @@ class StrategyEngine:
         else:
             scores["candle_pattern"] = 0
 
+        # 13. SUPPORT / RESISTANCE
         ns, nr = _g("Near_Support", 0), _g("Near_Resistance", 0)
         if ns:
             scores["support_resistance"] = 1
@@ -188,6 +201,7 @@ class StrategyEngine:
         else:
             scores["support_resistance"] = 0
 
+        # 14. VOLUME
         vol = _g("Volume", 0)
         if vol > 0:
             avg_vol = df["Volume"].tail(20).mean()
@@ -199,6 +213,9 @@ class StrategyEngine:
         else:
             scores["volume_confirm"] = 0
 
+        # ══════════════════════════════════════
+        # WEIGHTED SCORE
+        # ══════════════════════════════════════
         bull_score = bear_score = max_possible = 0.0
         for key, value in scores.items():
             w = self.weights.get(key, 1.0)
@@ -267,13 +284,26 @@ class StrategyEngine:
         if rr < settings.MIN_RR_RATIO:
             return None
 
-        pip_sz = 0.01 if "JPY" in pair else 0.0001
+        # Usa pip size dalla config centralizzata
+        pip_sz = settings.get_pip_size(pair)
+
+        # Decimali per il prezzo
+        if pair in ["XAUUSD"]:
+            decimals = 2
+        elif pair in ["XAGUSD"]:
+            decimals = 3
+        elif "JPY" in pair:
+            decimals = 3
+        else:
+            decimals = 5
 
         return Signal(
             pair=pair, direction=direction,
-            entry=round(entry, 5), stop_loss=round(sl, 5),
-            take_profit_1=round(tp1, 5), take_profit_2=round(tp2, 5),
-            take_profit_3=round(tp3, 5),
+            entry=round(entry, decimals),
+            stop_loss=round(sl, decimals),
+            take_profit_1=round(tp1, decimals),
+            take_profit_2=round(tp2, decimals),
+            take_profit_3=round(tp3, decimals),
             lot_size=0, risk_amount=0, risk_pct=settings.RISK_PER_TRADE,
             rr_ratio=round(rr, 2),
             sl_pips=round(sl_dist / pip_sz, 1),
