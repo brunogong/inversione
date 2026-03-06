@@ -27,7 +27,4 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          ACCOUNT_BALANCE: ${{ secrets.ACCOUNT_BALANCE }}
-          RISK_PER_TRADE: ${{ secrets.RISK_PER_TRADE }}
-          MIN_CONFLUENCE: ${{ secrets.MIN_CONFLUENCE }}
         run: python scanner.py
