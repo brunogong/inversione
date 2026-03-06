@@ -32,9 +32,9 @@ from datetime import datetime, timezone
 # ═══════════════════════════════════════════════════════════════
 TELEGRAM_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
 TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
-ACCOUNT_BALANCE = float(os.environ.get("ACCOUNT_BALANCE", "10000"))
-RISK_PER_TRADE = float(os.environ.get("RISK_PER_TRADE", "1.5"))
-MIN_CONFLUENCE = float(os.environ.get("MIN_CONFLUENCE", "4.5"))
+ACCOUNT_BALANCE = 2000
+RISK_PER_TRADE = 1.5
+MIN_CONFLUENCE = 4.5
 MIN_RR_RATIO = 2.0
 
 PAIRS = [
