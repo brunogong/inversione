@@ -19,7 +19,7 @@ class Settings:
     RISK_PER_TRADE: float = 1.5
     MAX_DAILY_RISK: float = 5.0
     MAX_OPEN_TRADES: int = 5
-    MIN_CONFLUENCE: float = 6.0
+    MIN_CONFLUENCE: float = 4.5
     MIN_RR_RATIO: float = 2.0
     COOLDOWN_MINUTES: int = 60
     SCAN_INTERVAL: int = 5
