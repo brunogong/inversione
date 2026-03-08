@@ -25,59 +25,29 @@ class Settings:
     SCAN_INTERVAL: int = 5
 
     PAIRS: List[str] = field(default_factory=lambda: [
-        # ── Metalli ────────────────────────
-        "XAUUSD",   # Oro
-        "XAGUSD",   # Argento
-        # ── Major ─────────────────────────
-        "EURUSD",
-        "GBPUSD",
-        "USDJPY",
-        "USDCHF",
-        "AUDUSD",
-        "NZDUSD",
-        "USDCAD",
-        # ── Cross EUR ─────────────────────
-        "EURJPY",
-        "EURGBP",
-        "EURAUD",
-        "EURCHF",
-        "EURNZD",
-        "EURCAD",
-        # ── Cross GBP ─────────────────────
-        "GBPJPY",
-        "GBPCHF",
-        "GBPAUD",
-        "GBPNZD",
-        "GBPCAD",
-        # ── Cross AUD/NZD ─────────────────
-        "AUDNZD",
-        "AUDCAD",
-        "AUDJPY",
-        "NZDJPY",
-        "NZDCAD",
-        # ── Cross JPY/CHF ─────────────────
-        "CADJPY",
-        "CHFJPY",
+        "XAUUSD", "XAGUSD",
+        "EURUSD", "GBPUSD", "USDJPY", "USDCHF",
+        "AUDUSD", "NZDUSD", "USDCAD",
+        "EURJPY", "EURGBP", "EURAUD", "EURCHF", "EURNZD", "EURCAD",
+        "GBPJPY", "GBPCHF", "GBPAUD", "GBPNZD", "GBPCAD",
+        "AUDNZD", "AUDCAD", "AUDJPY", "NZDJPY", "NZDCAD",
+        "CADJPY", "CHFJPY",
     ])
 
-    # Ticker speciali per yfinance (quelli che non seguono il formato XXXYYY=X)
     SPECIAL_TICKERS: Dict = field(default_factory=lambda: {
-        "XAUUSD": "XAUUSD=X",
-        "XAGUSD": "XAGUSD=X",
+        "XAUUSD": "GC=F",
+        "XAGUSD": "SI=F",
     })
 
-    # Configurazione pip per asset speciali
     PIP_CONFIG: Dict = field(default_factory=lambda: {
-        "XAUUSD": {"pip_size": 0.01,  "pip_value_lot": 1.0,   "name": "Gold"},
-        "XAGUSD": {"pip_size": 0.001, "pip_value_lot": 1.0,   "name": "Silver"},
-        # Le coppie JPY hanno pip_size 0.01 (gestito automaticamente)
-        # Tutte le altre hanno pip_size 0.0001 (default)
+        "XAUUSD": {"pip_size": 0.10, "pip_value_lot": 1.0, "name": "Gold"},
+        "XAGUSD": {"pip_size": 0.01, "pip_value_lot": 1.0, "name": "Silver"},
     })
 
     TIMEFRAMES: Dict = field(default_factory=lambda: {
         "primary": {"yf_interval": "1h", "yf_period": "60d", "label": "H1"},
         "confirm": {"yf_interval": "4h", "yf_period": "120d", "label": "H4"},
-        "higher":  {"yf_interval": "1d", "yf_period": "365d", "label": "D1"},
+        "higher": {"yf_interval": "1d", "yf_period": "365d", "label": "D1"},
     })
 
     WEIGHTS: Dict = field(default_factory=lambda: {
@@ -103,30 +73,23 @@ class Settings:
         self.SCAN_INTERVAL = int(_secret("SCAN_INTERVAL_MINUTES", self.SCAN_INTERVAL))
 
     def get_pip_size(self, pair):
-        """Restituisce la dimensione del pip per una coppia."""
         if pair in self.PIP_CONFIG:
             return self.PIP_CONFIG[pair]["pip_size"]
         elif "JPY" in pair:
             return 0.01
-        else:
-            return 0.0001
+        return 0.0001
 
     def get_pip_value(self, pair, price):
-        """Restituisce il valore del pip per 1 lotto standard."""
         if pair in self.PIP_CONFIG:
-            cfg = self.PIP_CONFIG[pair]
-            return cfg["pip_value_lot"]
-
+            return self.PIP_CONFIG[pair]["pip_value_lot"]
         quote = pair[3:6]
         if quote == "USD":
             return 10.0
         elif "JPY" in pair:
             return (10.0 / price) * 100 if price > 0 else 10.0
-        else:
-            return 10.0 / price if price > 0 else 10.0
+        return 10.0 / price if price > 0 else 10.0
 
     def get_ticker(self, pair):
-        """Restituisce il ticker yfinance per una coppia."""
         if pair in self.SPECIAL_TICKERS:
             return self.SPECIAL_TICKERS[pair]
         return f"{pair[:3]}{pair[3:]}=X"
