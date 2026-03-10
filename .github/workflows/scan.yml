@@ -1,4 +1,4 @@
-name: 📊 Forex Scanner
+name: Inversione - Forex Scanner
 
 on:
   schedule:
@@ -8,25 +8,28 @@ on:
 jobs:
   scan:
     runs-on: ubuntu-latest
-    
+    timeout-minutes: 15
+
     steps:
       - name: 📥 Checkout repository
         uses: actions/checkout@v4
-      
+
       - name: 🐍 Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      
-      - name: 📦 Install dependencies
+
+      - name: 📦 Installa dipendenze
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-      
-      - name: 📊 Run Forex Scanner
+          pip install --upgrade pip
+          pip install yfinance pandas requests feedparser textblob
+          python -m textblob.download_corpora lite
+
+      - name: 📊 Esegui Scanner
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           ACCOUNT_BALANCE: ${{ secrets.ACCOUNT_BALANCE }}
           RISK_PERCENT: ${{ secrets.RISK_PERCENT }}
+          REPO_NAME: "Inversione"
         run: python scanner.py
